@@ -1,13 +1,16 @@
 # DeepSeek-V4.1-Flash-1017 EXL3 3.5 bpw at 1M context, tensor parallel over five cards (exllamav3 + open pull requests)
 
-> **State of 2026-10-20. Layout `tp5-1017-35` of this repository is what serves on this machine**, started at boot
-> by its systemd unit. Every figure below is a single run unless two are given, measured from the client unless
+> **State of 2026-10-20. Layout `tp5-1017-35` of this repository is what serves on this machine** (with the
+> lightning indexer in INT8 since 10:15 that day), started at boot by its systemd unit. Every figure below is a single run unless two are given, measured from the client unless
 > it says server; what was not measured is in [Limits](#limits-and-what-was-not-measured).
 
 DeepSeek-V4.1-Flash-1017 (the 17 October checkpoint) quantized to EXL3 3.5 bpw by LibertAI, at **1,048,576 tokens of
 FP16 context**, one request at a time, on four CMP 170HX and one RTX PRO 6000 in **tensor parallel**: every layer is
-split over all five cards. The engine is upstream exllamav3 `dev` plus open pull requests, served by a TabbyAPI
-fork. Use: C coding (review, bug finding, fixes, new code, agent turns with tools).
+split over all five cards. The engine is upstream exllamav3 `dev` plus open pull requests and one commit of ours
+that scores the lightning indexer (the part of the attention that picks which earlier tokens each token reads) in
+INT8: a 1M-token prefill is 9% faster with the model's output unchanged within the measurement noise
+([Lightning indexer in INT8](#lightning-indexer-in-int8)). Served by a TabbyAPI fork. Use: C coding (review, bug
+finding, fixes, new code, agent turns with tools).
 
 ```
 CMP 170HX x4  (64 GB, sm_80, PCIe Gen2 x16, 150 W)   tensor parallel, at most 58 GB each
@@ -19,25 +22,75 @@ host RAM      (499 GiB)                              the two engram tables (2 x 
 
 ### Huge C prompts, cold, 1M FP16 context
 
-One request at a time against the served layout. Each prompt is a review request over the first N tokens of a C /
-CUDA / C++ source corpus (concatenated sources and C headers, not published; 3.155 characters per token with the
-model's tokenizer), with a unique first line so nothing comes from the prompt cache: **every prefill is cold**. The
-engram tables were read into the page cache first, as the prewarm unit does after boot. Greedy, 600 new tokens,
-reasoning on (the template's default). [tools/bench_long.py](tools/bench_long.py),
-[results/long_c_prompts_tp5-dyn.txt](results/long_c_prompts_tp5-dyn.txt) and the server's figures in
+One request at a time against the served layout (INT8 indexer). Each prompt is a review request over the first N
+tokens of a C / CUDA / C++ source corpus (concatenated sources and C headers, not published; 3.155 characters per
+token with the model's tokenizer), with a unique first line so nothing comes from the prompt cache: **every prefill
+is cold**. The engram tables were read into the page cache first, as the prewarm unit does after boot. Greedy, 600
+new tokens, reasoning on (the template's default). [tools/bench_long.py](tools/bench_long.py),
+[results/long_c_prompts_tp5-int8.txt](results/long_c_prompts_tp5-int8.txt) and the server's figures in
+[results/long_c_prompts_server_metrics_int8.txt](results/long_c_prompts_server_metrics_int8.txt); the same run with
+the FP16 indexer the night before: [results/long_c_prompts_tp5-dyn.txt](results/long_c_prompts_tp5-dyn.txt),
 [results/long_c_prompts_server_metrics.txt](results/long_c_prompts_server_metrics.txt).
 
-| Prompt tokens | Time to first token | Prefill, client (prompt / TTFT) | Prefill, server | Decode, client | Decode, server |
-|---:|---:|---:|---:|---:|---:|
-| 26,296 | 14.2 s | 1,850 tok/s | 1,934 tok/s | 79.7 tok/s | 81.0 tok/s |
-| 127,604 | 62.3 s | 2,049 | 2,062 | 75.8 | 73.0 |
-| 253,055 | 131.6 s | 1,923 | 1,929 | 87.5 | 83.6 |
-| 513,791 | 298.1 s | 1,724 | 1,728 | 94.6 | 88.2 |
-| 1,002,677 | 680.0 s (11.3 min) | 1,475 | 1,476 | 83.0 | 81.1 |
+| Prompt tokens | Time to first token | Prefill, client (prompt / TTFT) | Prefill, server | Decode, client | Decode, server | TTFT with the FP16 indexer |
+|---:|---:|---:|---:|---:|---:|---:|
+| 26,296 | 12.4 s | 2,116 tok/s | 2,138 tok/s | 84.2 tok/s | 83.4 tok/s | 14.2 s |
+| 127,604 | 58.7 s | 2,173 | 2,177 | 89.2 | 88.4 | 62.3 s |
+| 253,055 | 124.2 s | 2,037 | 2,039 | 67.9 | 67.4 | 131.6 s |
+| 513,791 | 274.1 s | 1,874 | 1,876 | 100.3 | 99.0 | 298.1 s |
+| 1,039,782 | 632.1 s (10.5 min) | 1,645 | 1,646 | 72.3 | 73.4 | 680.0 s for 1,002,677 tokens (1,475 tok/s) |
 
-Decode is drafted by the model's own head (dynamic draft length); it depends on how predictable the reply is, so
-another text gives another figure. Client decode is tokens after the first divided by the time after the first;
-the server's figure also counts the first token.
+One run each. The corpus's tail was extended between the two runs, so the last prompt is 37,105 tokens longer
+here; the four shorter prompts are the same tokens. Below about 128K tokens the difference is mostly run-to-run
+variation (the indexer is a small part there); from 512K up it is the indexer
+([Lightning indexer in INT8](#lightning-indexer-in-int8)). Decode is drafted by the model's own head (dynamic
+draft length; 63-85% of the drafted tokens accepted here); it depends on how predictable the reply is, so another
+text gives another figure, and the INT8 indexer does not touch it. Client decode is tokens after the first divided
+by the time after the first; the server's figure also counts the first token.
+
+### Lightning indexer in INT8
+
+The indexer scores every earlier token of the prompt against each new one to choose the 512 compressed entries the
+attention reads; during a long prefill that scoring grows with the depth and is what makes the last tokens of a 1M
+prompt slower than the first. The engine commit on top of `recipe-09` lets it run in a lower precision, chosen per
+GPU architecture, through `EXL3_DSA_INDEXER_DTYPE` (or `--indexer_dtype` on the command line):
+
+- `fp16` (the default when unset), `int8` (sm_80 and newer), `fp8` (e4m3, sm_89 and newer) or `fp4` (e2m1 with a
+  power-of-two scale per 32 values, the format of DeepSeek's reference indexer; sm_100 and newer);
+- one value for every card, or `ARCH:DTYPE` items such as `sm_80:int8,sm_120:fp4`, where a bare item covers the
+  architectures not listed; a type a card cannot run is refused when the model loads;
+- only the prefill-sized scoring changes: queries and keys are quantized per row (keys once per pass), the
+  multiply runs on the cards' INT8 / FP8 / FP4 tensor cores, and calls under 64 query rows (decode) stay FP16.
+
+**Served: `sm_80:int8,sm_120:int8`.** Measured with [tools/kv_eval.py](tools/kv_eval.py) on one prompt of 1,016,849
+tokens of the C corpus with three planted keys, one load per row, no draft head, every figure against an FP16 run of
+the same layout ([results/indexer_dtype.txt](results/indexer_dtype.txt)). Changing only the prefill chunk size of the
+FP16 run (16,384 to 8,192) already moves KL by 0.0036 / 0.0030 / 0.0012 / 0.0002 at 16K / 131K / 524K / 1M: that is
+the noise floor.
+
+| Layout | Indexer | Prefill (prompt) | KL vs FP16 at 16K / 131K / 524K / 1M | Top-1 at 16K / 1M | Keys recalled |
+|---|---|---:|---|---|---:|
+| tensor parallel 5 | FP16 | 662 s (1,016,849 tokens) | - | - | 3/3 |
+| tensor parallel 5 | **INT8 on every card (served)** | **603 s (-9%)** | 0.0034 / 0.0029 / 0.0032 / 0.0004 | 98.0% / 99.9% | 3/3 |
+| tensor parallel 5 | INT8 on the CMP 170HX, FP4 on the PRO | 600 s (-9%) | 0.0048 / 0.0043 / 0.0020 / 0.0001 | 97.1% / 99.9% | 3/3 |
+| layer split, 3 x CMP 170HX + PRO | FP16 | 285 s (525,329 tokens) | - | - | 3/3 |
+| layer split, 3 x CMP 170HX + PRO | INT8 on the CMP 170HX, FP4 on the PRO | 274 s (-4%) | 0.0033 / 0.0035 / 0.0018 / - | 97.8% / - | 3/3 |
+
+The corpus NLL changed by less than two standard errors at every depth, in both directions. The gain grows with the
+depth: the last 512K tokens of the 1M prompt took 326 s instead of 372 s (-12%); below about 64K tokens there is
+nothing to win. Under tensor parallel every card scores every key, so the CMP 170HX set the time and FP4 on the PRO
+buys nothing; in a layer split each card scores the layers it holds, and there the PRO's own type counts.
+
+The scoring kernel alone, one 256-row prefill slab against 1M keys ([tools/bench_indexer.py](tools/bench_indexer.py)):
+
+| Card | FP16 | INT8 | FP8 | FP4 |
+|---|---:|---:|---:|---:|
+| CMP 170HX (sm_80) | 22.3 ms | 12.3 ms | - | - |
+| RTX PRO 6000 (sm_120) | 7.1 ms | 3.4 ms | 3.4 ms | 2.6 ms |
+
+On the PRO, FP8 is no faster than INT8 and keeps less of the scores (top-512 equal to FP16 on random data: INT8
+99.2%, FP8 97.0%, FP4 86.4%), so INT8 is the choice there. FP4, the reference's own format, is another quarter
+faster in the kernel; it pays only where the PRO scores its own layers (a layer split).
 
 ### The nine C-coding requests, cold
 
@@ -45,6 +98,8 @@ Recipe 08's request set for the drafter tuning (review of a C file, bug finding,
 rewritten, a whole file returned, two agent turns with tool schemas, new code, an explanation), prompts of 139 to
 9,426 tokens. It quotes GPL sources, so it is not published here; [tools/bench_stream.py](tools/bench_stream.py)
 reads it from `WORKLOADS_DIR`. Fresh server, one stream, greedy, each request's own token limit, 1M FP16 cache.
+Measured with the FP16 indexer, before the INT8 switch: at these prompt lengths (at most 9,426 tokens) the indexer
+is a negligible part of the prefill, and decode does not use the INT8 path.
 Server figures from [results/coding_server_metrics_tp5m-dyn.txt](results/coding_server_metrics_tp5m-dyn.txt),
 client figures from [results/raw/mtp-1020-0126/bench-tp5m-dyn.log](results/raw/mtp-1020-0126/bench-tp5m-dyn.log).
 
@@ -82,7 +137,7 @@ Dynamic drafting was faster on 7 of the 9 requests and 3-4% slower on two (funct
 
 [tools/bench_log.py](tools/bench_log.py) requests (two different ~34K-token prompts of documentation text, then three 900-token
 technical answers), warm-up first, fresh server each, server figures; prose rather than code, so these compare the
-layouts with each other, not with the tables above ([results/raw](results/raw)):
+layouts with each other, not with the tables above ([results/raw](results/raw)). All with the FP16 indexer:
 
 | Layout | Model | Prefill, 34K prompts | Decode, 900-token answers |
 |---|---|---:|---:|
@@ -125,8 +180,9 @@ one slot, so concurrent requests queue.
   1017 keeps when no tools are declared. The one case the PR's template does not match: tool-call arguments given as
   a JSON string raise instead of being parsed; TabbyAPI parses such strings into objects before it renders the
   template, so only arguments that are not valid JSON would reach it.
-- **Engine**: exllamav3 fork [anoane/exllamav3-anemone](https://github.com/anoane/exllamav3-anemone), tag
-  `recipe-09` = commit `5c0da061`: upstream `dev` at `f157fc0b` plus the open pull requests
+- **Engine**: exllamav3 fork [anoane/exllamav3-anemone](https://github.com/anoane/exllamav3-anemone), branch
+  `dsv41f-1017` = commit `309ef6d1`: the indexer precision commit (above) on top of tag `recipe-09` = commit
+  `5c0da061`, which is upstream `dev` at `f157fc0b` plus the open pull requests
   [#449](https://github.com/turboderp-org/exllamav3/pull/449) (DeepSeek-V4.1, with tensor parallel and the draft head
   beside a tensor-parallel model), [#468](https://github.com/turboderp-org/exllamav3/pull/468) and
   [#472](https://github.com/turboderp-org/exllamav3/pull/472) (placement arguments and text), and the file of
@@ -151,8 +207,14 @@ one slot, so concurrent requests queue.
   (DSpark), loaded by layers on the PRO beside the tensor-parallel model.
 - `max_seq_len` and `cache_size` 1,048,576, FP16 cache (no KV quantization), `max_batch_size: 1`.
 - `TABBY_EXL3_GENERATOR_CHUNK=16384` (prefill chunk), `EXLLAMA_NO_P2P_COPY=1`, `EXLLAMAV3_TUNE_CACHE` per engine.
+- `EXL3_DSA_INDEXER_DTYPE=sm_80:int8,sm_120:int8`: the lightning indexer's prefill scoring in INT8 on every card
+  (see [Lightning indexer in INT8](#lightning-indexer-in-int8) for the other values).
 - Fallback: [serving/layouts/n4x-1017-35.env](serving/layouts/n4x-1017-35.env), the same model split by layers over
-  the four cards that existed before the fifth (decode about two thirds of the above).
+  the four cards that existed before the fifth (decode about two thirds of the above), also on engine `309ef6d1`
+  with the INT8 indexer (checked: loads, tool calls, a 21K-token C prompt at 1,744 tok/s).
+- FP16 indexer: [tp5-1017-35-fp16.env](serving/layouts/tp5-1017-35-fp16.env) (engine `5c0da061`, as served until
+  2026-10-20) and [n4x-1017-35-fp16.env](serving/layouts/n4x-1017-35-fp16.env) (engine `16d01882`); unsetting the
+  variable on engine `309ef6d1` gives the same FP16 scoring.
 
 ## Deploy
 
@@ -190,6 +252,8 @@ Switch layouts: `ln -sfn layouts/<name>.env ~/serve/ds41-exl3.env && sudo system
   of Python's multiprocessing resource tracker ending in `KeyError: '/<shared memory segment>'`, from the
   tensor-parallel shared-memory transfers. They name memory segments, not keys, and serving is unaffected.
 - **Sampled decoding, other prompt types, and the vision tower were not measured** with this layout.
+- **The INT8 indexer was judged on logits, not on task scores**: KL, top-1 and NLL against FP16 on one C corpus up
+  to 1M tokens, and recall of three planted keys; the nine C-coding requests were not rerun with it.
 - **One stream.** See Concurrency.
 - **vLLM routes** for this model on these cards were looked at and not run: they need an sm_80 attention path for
   V4.1 and an EXL3 expert split on 128-channel blocks that are not public.

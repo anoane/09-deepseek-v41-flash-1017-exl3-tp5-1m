@@ -1,0 +1,6 @@
+# tools/bench_long.py against the live server, layout tp5-1017-35 with dynamic_draft and the INT8 indexer (EXL3_DSA_INDEXER_DTYPE=sm_80:int8,sm_120:int8, engine 309ef6d1), 1M FP16 cache, engram tables in the page cache; every prompt cold (unique first line). 2026-10-20 10:19. Corpus: concatenated C/CUDA/C++ sources and C headers (not published), 3.155 characters per token; its tail was extended after the FP16 run, so the 1000K prompt is 1,039,782 tokens here against 1,002,677 there (the four shorter prompts are the same tokens).
+tp5-int8 prompt    26,296 tokens (cold) | ttft    12.4 s | effective prefill  2115.9 tok/s | decode  84.2 tok/s | 600 generated
+tp5-int8 prompt   127,604 tokens (cold) | ttft    58.7 s | effective prefill  2172.7 tok/s | decode  89.2 tok/s | 600 generated
+tp5-int8 prompt   253,055 tokens (cold) | ttft   124.2 s | effective prefill  2036.8 tok/s | decode  67.9 tok/s | 600 generated
+tp5-int8 prompt   513,791 tokens (cold) | ttft   274.1 s | effective prefill  1874.2 tok/s | decode 100.3 tok/s | 600 generated
+tp5-int8 prompt 1,039,782 tokens (cold) | ttft   632.1 s | effective prefill  1645.1 tok/s | decode  72.3 tok/s | 600 generated

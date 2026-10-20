@@ -1,0 +1,52 @@
+# Lightning-indexer scoring precision (EXL3_DSA_INDEXER_DTYPE), 2026-10-20, engine 309ef6d1 (fork branch dsv41f-1017).
+#
+# End to end: tools/kv_eval.py, one model load per row, no draft head, plain forward loop (so decode here is not the
+# server's figure). One chat of 1,016,849 tokens: a user turn holding the C / CUDA corpus of the long-prompt table
+# (not published) with three planted release keys at 10 / 50 / 90 % of it, then a question about them. Prefilled
+# in 16,384-token chunks; at four depths the next 1,024 corpus tokens are scored teacher-forced and compared with
+# the FP16 run of the same layout: KL(fp16 || this), top-1 agreement, change of the corpus NLL (mean, standard
+# error of the paired per-token differences). "Keys" = keys recalled in the greedy answer after the whole prompt.
+# Noise floor of the same harness and layout (FP16, prefill chunk 8,192 instead of 16,384):
+#   KL 0.0036 / 0.0030 / 0.0012 / 0.0002 at 16K / 131K / 524K / 1M, top-1 97.7 / 98.0 / 99.7 / 99.9 %.
+# The engine's prefill is not bit-reproducible run to run (the FP16 NLL at 16K was 1.1583 in one run, 1.1561 in
+# the next), so these are judged against that floor, not against bit equality.
+
+## Tensor parallel 5 (layout tp5-1017-35: four CMP 170HX sm_80 + RTX PRO 6000 sm_120), prompt 1,016,849 tokens
+
+indexer                    prefill to 1M (segments 16K / 131K / 524K / 1M)   keys
+fp16                       662 s  (8.0 / 52.2 / 230.3 / 371.9 s)              3/3
+sm_80:int8,sm_120:int8     603 s  (9.2 / 53.1 / 214.1 / 326.2 s)  -9 %        3/3   <- served
+sm_80:int8,sm_120:fp4      600 s  (9.0 / 52.5 / 213.2 / 325.3 s)  -9 %        3/3
+
+                           depth    KL      p99 KL   top-1    NLL change
+sm_80:int8,sm_120:int8     16K      0.0034  0.0293   98.0 %   -0.0015 +- 0.0037
+                           131K     0.0029  0.0352   98.2 %   -0.0016 +- 0.0026
+                           524K     0.0032  0.0488   99.4 %   +0.0019 +- 0.0029
+                           1M       0.0004  0.0007   99.9 %   -0.0013 +- 0.0008
+sm_80:int8,sm_120:fp4      16K      0.0048  0.0408   97.1 %   -0.0039 +- 0.0040
+                           131K     0.0043  0.0629   97.6 %   -0.0028 +- 0.0039
+                           524K     0.0020  0.0415   99.5 %   +0.0019 +- 0.0022
+                           1M       0.0001  0.0006   99.9 %   -0.0026 +- 0.0018
+
+## Layer split (layout n4x-1017-35's split: three CMP 170HX + RTX PRO 6000, -gs 58,58,58,86), prompt 525,329 tokens
+
+indexer                    prefill to 512K (segments 16K / 131K / 524K)      keys
+fp16                       285 s  (9.1 / 55.7 / 219.9 s)                      3/3
+sm_80:int8,sm_120:fp4      274 s  (9.1 / 54.9 / 209.7 s)  -4 %                3/3
+
+                           depth    KL      p99 KL   top-1    NLL change
+sm_80:int8,sm_120:fp4      16K      0.0033  0.0251   97.8 %   +0.0021 +- 0.0037
+                           131K     0.0035  0.0516   98.3 %   -0.0040 +- 0.0038
+                           524K     0.0018  0.0425   99.6 %   -0.0035 +- 0.0030
+
+## The scoring kernel alone (tools/bench_indexer.py): one 256-row prefill slab, 32 heads x 128, keys paged
+
+card                 keys    fp16      int8      fp8       fp4       key quantization (once per pass)
+CMP 170HX (sm_80)    512K    11.0 ms   6.2 ms    -         -         0.15 ms
+                     1M      22.3 ms   12.3 ms   -         -         0.27 ms
+RTX PRO 6000         512K    3.4 ms    1.7 ms    1.7 ms    1.2 ms    0.10-0.12 ms
+(sm_120)             1M      7.1 ms    3.4 ms    3.4 ms    2.6 ms    0.20-0.27 ms
+
+Top-512 selection equal to FP16 on random data: int8 99.2 %, fp8 97.0 %, fp4 86.4 % (the model's own data has more
+structure; the end-to-end figures above are the ones to judge by). Under tensor parallel every card scores every
+key (the indexer is replicated), so the slowest card sets the time: the PRO's choice changes nothing there.

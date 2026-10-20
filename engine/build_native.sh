@@ -4,12 +4,12 @@
 # only recompiles what changed. No GPU is visible during the build. No +PTX in the arch list: each card gets its own
 # machine code. The source tree is read-only, so the build runs on a copy of it.
 # The served extension was built in the test folders (arch list 8.0;12.0a) from the same native sources (no native
-# file changed between #449's rebase and this commit) and copied to native-5c0da061daa7; the script in this form,
-# with the paths below, has not run.
+# file changed between #449's rebase and this commit, nor in the indexer commit on top) and copied to
+# native-5c0da061daa7, then to native-309ef6d11920; the script in this form, with the paths below, has not run.
 # (The decode logs in results/ print a TORCH_CUDA_ARCH_LIST with +PTX: the engine sets that variable itself at import
 # from the visible cards when it is unset; it is not the list the extension was built with.)
 set -euo pipefail
-SHA=${SHA:-5c0da061daa7}
+SHA=${SHA:-309ef6d11920}
 REL=${REL:-$HOME/rnd/release/all}
 SRC=$REL/src-$SHA; NATIVE=$REL/native-$SHA; BUILD=$REL/build-$SHA
 [[ -f $SRC/setup.py && -f $SRC/.release-commit ]] || { echo "no complete engine source at $SRC" >&2; exit 1; }

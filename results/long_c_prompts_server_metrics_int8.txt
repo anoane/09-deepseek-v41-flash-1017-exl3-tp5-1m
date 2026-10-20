@@ -1,0 +1,7 @@
+# Server-side figures (TabbyAPI metrics in the unit journal) of the long C-prompt run with the INT8 indexer: layout tp5-1017-35 (dynamic_draft,
+# EXL3_DSA_INDEXER_DTYPE=sm_80:int8,sm_120:int8, engine 309ef6d1), 1M FP16 cache, every prompt cold. 2026-10-20 10:19-10:38.
+prompt    26296 (   26296 new) in   12.30 s = prefill  2138 tok/s |  600 generated at 83.4 T/s | draft 397/616 accepted (64%)
+prompt   127604 (  127604 new) in   58.60 s = prefill  2177 tok/s |  600 generated at 88.4 T/s | draft 418/570 accepted (73%)
+prompt   253055 (  253055 new) in  124.10 s = prefill  2039 tok/s |  600 generated at 67.4 T/s | draft 358/570 accepted (63%)
+prompt   513791 (  513791 new) in  273.90 s = prefill  1876 tok/s |  600 generated at 99.0 T/s | draft 466/551 accepted (85%)
+prompt  1039782 ( 1039782 new) in  631.70 s = prefill  1646 tok/s |  600 generated at 73.4 T/s | draft 422/572 accepted (74%)
