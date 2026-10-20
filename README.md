@@ -115,8 +115,16 @@ one slot, so concurrent requests queue.
   [deepseek-ai/DeepSeek-V4.1-Flash-1017](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017) at `1bae0e10`
   (the pack has no engram tables). [engine/download_model.sh](engine/download_model.sh), then
   [tools/make_view.py](tools/make_view.py) links both into the folder TabbyAPI loads and adds the chat template.
-- **Chat template**: [serving/chat_template.jinja](serving/chat_template.jinja), a port of the model's
-  `encoding/encoding.py`; the 1017 encoder differs from the earlier one only for tool results and content blocks.
+- **Chat template**: [serving/chat_template.jinja](serving/chat_template.jinja) is the template of
+  [pull request 11](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/discussions/11) on the 1017
+  repository (by qgallouedec, open on 2026-10-20), served since that day. Rendered against the 1017
+  `encoding/encoding.py` on 11 conversations ([results/template_comparison.txt](results/template_comparison.txt),
+  [tools/compare_templates.py](tools/compare_templates.py)) it matches the reference on all but one; our earlier port
+  of the pre-1017 encoder matched on plain chat, system prompts, thinking off, the reasoning levels and multi-turn,
+  but rendered two newlines instead of four before the tool list, and dropped the reasoning of a tool-call turn that
+  1017 keeps when no tools are declared. The one case the PR's template does not match: tool-call arguments given as
+  a JSON string raise instead of being parsed; TabbyAPI parses such strings into objects before it renders the
+  template, so only arguments that are not valid JSON would reach it.
 - **Engine**: exllamav3 fork [anoane/exllamav3-anemone](https://github.com/anoane/exllamav3-anemone), tag
   `recipe-09` = commit `5c0da061`: upstream `dev` at `f157fc0b` plus the open pull requests
   [#449](https://github.com/turboderp-org/exllamav3/pull/449) (DeepSeek-V4.1, with tensor parallel and the draft head
@@ -178,6 +186,9 @@ Switch layouts: `ln -sfn layouts/<name>.env ~/serve/ds41-exl3.env && sudo system
 - **Stopping the server** logs `Timed out waiting for worker` while the tensor-parallel workers shut down; harmless
   here, and the exit error behind it is fixed upstream-side in
   [#534](https://github.com/turboderp-org/exllamav3/pull/534) (not in this engine commit).
+- **Every restart of the tensor-parallel server writes tens of thousands of lines to the journal**: tracebacks
+  of Python's multiprocessing resource tracker ending in `KeyError: '/<shared memory segment>'`, from the
+  tensor-parallel shared-memory transfers. They name memory segments, not keys, and serving is unaffected.
 - **Sampled decoding, other prompt types, and the vision tower were not measured** with this layout.
 - **One stream.** See Concurrency.
 - **vLLM routes** for this model on these cards were looked at and not run: they need an sm_80 attention path for

@@ -1,0 +1,12 @@
+# tools/compare_templates.py, 2026-10-20: each conversation rendered by deepseek-ai/DeepSeek-V4.1-Flash-1017 encoding/encoding.py (reference) and by two chat templates: "ours" (the port served until 2026-10-20) and "pr11" (Hugging Face pull request 11 on that repository, served since). MATCH = identical string.
+plain                          ours=MATCH | pr11=MATCH
+system                         ours=MATCH | pr11=MATCH
+thinking off                   ours=MATCH | pr11=MATCH
+effort low                     ours=MATCH | pr11=MATCH
+effort max                     ours=MATCH | pr11=MATCH
+effort 30                      ours=MATCH | pr11=MATCH
+multi-turn                     ours=MATCH | pr11=MATCH
+tool, object args              ours=DIFF@122 ref:'he reasoning)\n\n\n\n## Tools\n\nYou have access to a se' got:'he reasoning)\n\n## Tools\n\nYou have access to a set ' | pr11=MATCH
+tool, string args              ours=DIFF@122 ref:'he reasoning)\n\n\n\n## Tools\n\nYou have access to a se' got:'he reasoning)\n\n## Tools\n\nYou have access to a set ' | pr11=DIFF@1 ref:'<｜begin▁of▁sentence｜><｜System｜>Reaso' got:'<template raised ValueError: Tool ca'
+tool result, no tools declared ours=DIFF@164 ref:'c<｜Assistant｜><think>Read it.</think>\n\n<｜DSML｜ cal' got:'c<｜Assistant｜></think>\n\n<｜DSML｜ calls>\n<｜DSML｜ inv' | pr11=MATCH
+tool result then answer        ours=DIFF@122 ref:'he reasoning)\n\n\n\n## Tools\n\nYou have access to a se' got:'he reasoning)\n\n## Tools\n\nYou have access to a set ' | pr11=MATCH
