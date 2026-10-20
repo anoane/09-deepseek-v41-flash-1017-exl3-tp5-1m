@@ -1,0 +1,12 @@
+# Server-side figures (TabbyAPI metrics in the unit journal) of the nine C-coding requests on the served layout tp5-1017-35 as of
+# 2026-10-20 11:10: dynamic_draft, EXL3_DSA_INDEXER_DTYPE=sm_80:int8,sm_120:int8, EXL3_INT8_GEMV=0, engine 309ef6d1, 1M FP16 cache.
+# Fresh server, one warm-up request, then the first pass: every prompt cold (none cached). Client figures: raw/decode-gemv0-live-1020-1109/served-1.log
+review       prompt  5171 in 2.87 s (1,802 T/s) | 1500 generated at  88.6 T/s | draft  983/1468 accepted
+bug-find     prompt  3479 in 2.03 s (1,714 T/s) |  621 generated at  94.6 T/s | draft  442/550 accepted
+fix-diff     prompt  3404 in 1.98 s (1,719 T/s) |  350 generated at 111.0 T/s | draft  262/317 accepted
+fix-func     prompt  3405 in 1.98 s (1,720 T/s) | 1200 generated at 102.6 T/s | draft  843/1121 accepted
+whole-file   prompt  1788 in 1.19 s (1,503 T/s) | 2600 generated at  99.3 T/s | draft 1814/2494 accepted
+agent-edit   prompt  4033 in 2.30 s (1,753 T/s) |  154 generated at 106.0 T/s | draft  113/149 accepted
+agent-multi  prompt  9426 in 4.52 s (2,085 T/s) |  212 generated at 116.6 T/s | draft  159/194 accepted
+new-code     prompt   139 in 0.24 s (  579 T/s) | 1500 generated at  84.0 T/s | draft  938/1487 accepted
+explain      prompt  5158 in 2.69 s (1,917 T/s) | 1000 generated at  85.2 T/s | draft  636/944 accepted

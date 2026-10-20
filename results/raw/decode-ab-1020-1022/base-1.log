@@ -1,0 +1,10 @@
+base-1 review       ttft   3.32 s |  1500 tokens, decode   86.8 tok/s
+base-1 bug-find     ttft   2.16 s |   577 tokens, decode  106.2 tok/s
+base-1 fix-diff     ttft   2.08 s |   373 tokens, decode  122.0 tok/s
+base-1 fix-func     ttft   2.11 s |  1200 tokens, decode   93.7 tok/s
+base-1 whole-file   ttft   1.89 s |  2600 tokens, decode   98.8 tok/s
+base-1 agent-edit   ttft   2.43 s |   187 tokens, decode   89.6 tok/s
+base-1 agent-multi  ttft   4.66 s |   219 tokens, decode  113.6 tok/s
+base-1 new-code     ttft   0.31 s |  1500 tokens, decode   83.7 tok/s
+base-1 explain      ttft   2.78 s |  1000 tokens, decode   83.0 tok/s
+base-1 streams=1: mean per-stream decode 97.5 tok/s over 9 requests; aggregate 76.0 tok/s (9156 tokens in 121 s)

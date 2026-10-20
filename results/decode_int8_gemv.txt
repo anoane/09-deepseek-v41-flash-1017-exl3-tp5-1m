@@ -1,0 +1,22 @@
+# INT8 in decode: EXL3_INT8_GEMV on the served layout tp5-1017-35 (INT8 indexer, engine 309ef6d1), 2026-10-20.
+# The nine C-coding requests (tools/bench_stream.py), one stream, greedy; each arm a fresh server, one warm-up request,
+# then the set twice (the second pass mostly from the prompt cache; decode is what is compared). Mean per-request
+# client decode, tok/s. Logs: raw/decode-ab-1020-1022 (the three arms, 10:38-11:00) and raw/decode-gemv0-live-1020-1109
+# (the served setting after the switch, 11:09).
+#
+# EXL3_INT8_GEMV=2 is upstream's default: INT8 activations (dp4a) for the mul1-codebook weight GEMVs up to K = 5 bits
+# on sm_80 and K = 6 on sm_120 (EXL3_INT8_GEMV_MAX_K). This pack is mul1: routed experts 3-4 bpw, attention and
+# shared experts 6 bpw.
+
+setting                                         pass 1   pass 2
+EXL3_INT8_GEMV=2 (default)                       97.5     99.9
+EXL3_INT8_GEMV=2, EXL3_INT8_GEMV_MAX_K=6         97.1     96.9      (the CMP 170HX's 6-bit tensors in INT8 too)
+EXL3_INT8_GEMV=0                                100.7    103.6
+EXL3_INT8_GEMV=0, again after the switch         99.9    100.7      (served)
+
+Mean of the four EXL3_INT8_GEMV=0 passes 101.2 against 98.7 for the default: about +2.5%, close to the spread
+between server starts (97.5-103.6 over these ten passes; the night before, the default gave 103.5 in one pass). On
+the long replies of the first pair the draft head's tokens were accepted more often with FP16 activations
+(whole file 74% against 70-72%, new code 67-69% against 63-64%); after the switch the acceptance was as with the
+default (whole file 73-75%, new code 63%). Served for the higher precision at no measured cost; more INT8 (K = 6)
+was not faster.

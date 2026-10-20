@@ -1,7 +1,8 @@
 # DeepSeek-V4.1-Flash-1017 EXL3 3.5 bpw at 1M context, tensor parallel over five cards (exllamav3 + open pull requests)
 
 > **State of 2026-10-20. Layout `tp5-1017-35` of this repository is what serves on this machine** (with the
-> lightning indexer in INT8 since 10:15 that day), started at boot by its systemd unit. Every figure below is a single run unless two are given, measured from the client unless
+> lightning indexer in INT8 since 10:15 that day and `EXL3_INT8_GEMV=0` since 11:10), started at boot by its systemd
+> unit. Every figure below is a single run unless two are given, measured from the client unless
 > it says server; what was not measured is in [Limits](#limits-and-what-was-not-measured).
 
 DeepSeek-V4.1-Flash-1017 (the 17 October checkpoint) quantized to EXL3 3.5 bpw by LibertAI, at **1,048,576 tokens of
@@ -22,7 +23,8 @@ host RAM      (499 GiB)                              the two engram tables (2 x 
 
 ### Huge C prompts, cold, 1M FP16 context
 
-One request at a time against the served layout (INT8 indexer). Each prompt is a review request over the first N
+One request at a time against the served layout (INT8 indexer; measured at 10:19, before `EXL3_INT8_GEMV=0`, so the
+decode columns are with upstream's INT8 decode GEMVs). Each prompt is a review request over the first N
 tokens of a C / CUDA / C++ source corpus (concatenated sources and C headers, not published; 3.155 characters per
 token with the model's tokenizer), with a unique first line so nothing comes from the prompt cache: **every prefill
 is cold**. The engram tables were read into the page cache first, as the prewarm unit does after boot. Greedy, 600
@@ -97,26 +99,46 @@ faster in the kernel; it pays only where the PRO scores its own layers (a layer 
 Recipe 08's request set for the drafter tuning (review of a C file, bug finding, a fix as a diff, functions
 rewritten, a whole file returned, two agent turns with tool schemas, new code, an explanation), prompts of 139 to
 9,426 tokens. It quotes GPL sources, so it is not published here; [tools/bench_stream.py](tools/bench_stream.py)
-reads it from `WORKLOADS_DIR`. Fresh server, one stream, greedy, each request's own token limit, 1M FP16 cache.
-Measured with the FP16 indexer, before the INT8 switch: at these prompt lengths (at most 9,426 tokens) the indexer
-is a negligible part of the prefill, and decode does not use the INT8 path.
-Server figures from [results/coding_server_metrics_tp5m-dyn.txt](results/coding_server_metrics_tp5m-dyn.txt),
-client figures from [results/raw/mtp-1020-0126/bench-tp5m-dyn.log](results/raw/mtp-1020-0126/bench-tp5m-dyn.log).
+reads it from `WORKLOADS_DIR`. The served layout as of 2026-10-20 11:10 (INT8 indexer, `EXL3_INT8_GEMV=0`), fresh
+server, one warm-up request, one stream, greedy, each request's own token limit, 1M FP16 cache, every prompt cold.
+Server figures from [results/coding_server_metrics_served-1020.txt](results/coding_server_metrics_served-1020.txt),
+client figures from [results/raw/decode-gemv0-live-1020-1109/served-1.log](results/raw/decode-gemv0-live-1020-1109/served-1.log).
 
 | Request | Prompt tokens | TTFT | Prefill, server | Tokens out | Decode, client |
 |---|---:|---:|---:|---:|---:|
-| review | 5,171 | 3.28 s | 1,647 tok/s | 1,500 | 91.9 tok/s |
-| bug finding | 3,479 | 2.14 s | 1,689 | 615 | 105.7 |
-| fix as a diff | 3,404 | 2.07 s | 1,702 | 403 | 120.0 |
-| fix, functions rewritten | 3,405 | 2.09 s | 1,703 | 1,200 | 99.1 |
-| whole file returned | 1,788 | 1.29 s | 1,478 | 2,600 | 99.1 |
-| agent: edit call (tools) | 4,033 | 2.39 s | 1,754 | 208 | 115.0 |
-| agent: later turn (tools) | 9,426 | 4.66 s | 2,067 | 136 | 124.7 |
-| new code | 139 | 0.32 s | 579 | 1,500 | 83.2 |
-| explanation | 5,158 | 2.76 s | 1,925 | 1,000 | 92.5 |
+| review | 5,171 | 2.97 s | 1,802 tok/s | 1,500 | 88.9 tok/s |
+| bug finding | 3,479 | 2.14 s | 1,714 | 621 | 95.7 |
+| fix as a diff | 3,404 | 2.06 s | 1,719 | 350 | 112.9 |
+| fix, functions rewritten | 3,405 | 2.06 s | 1,720 | 1,200 | 103.0 |
+| whole file returned | 1,788 | 1.27 s | 1,503 | 2,600 | 99.5 |
+| agent: edit call (tools) | 4,033 | 2.38 s | 1,753 | 154 | 109.8 |
+| agent: later turn (tools) | 9,426 | 4.61 s | 2,085 | 212 | 119.9 |
+| new code | 139 | 0.31 s | 579 | 1,500 | 84.2 |
+| explanation | 5,158 | 2.77 s | 1,917 | 1,000 | 85.5 |
 
-Mean decode 103.5 tok/s; the nine requests together gave 9,162 tokens in 116 s of wall time (78.6 tok/s with
-prefill and gaps). Tool calls come back as OpenAI `tool_calls` (checked on the tensor-parallel layouts and the layer split, results/raw/*/toolcall.log).
+Mean decode 99.9 tok/s (100.7 on a second pass); the nine requests together gave 9,137 tokens in 117 s of wall time
+(77.8 tok/s with prefill and gaps). The mean moves by a few percent between server starts: ten passes on 2026-10-20
+gave 96.9 to 103.6 tok/s whatever the settings, and the night before, with the FP16 indexer and upstream's INT8
+decode GEMVs, one pass gave 103.5 ([results/coding_server_metrics_tp5m-dyn.txt](results/coding_server_metrics_tp5m-dyn.txt)).
+Tool calls come back as OpenAI `tool_calls` (checked on the tensor-parallel layouts and the layer split, results/raw/*/toolcall.log).
+
+### INT8 in decode: off
+
+Upstream's `EXL3_INT8_GEMV=2` (the default) runs the weight GEMVs of this pack (codebook mul1) with INT8 activations
+up to 5-bit tensors on sm_80 and 6-bit on sm_120. On these cards it does not pay
+([results/decode_int8_gemv.txt](results/decode_int8_gemv.txt)), on the nine requests above, two passes per fresh
+server:
+
+| `EXL3_INT8_GEMV` | Mean decode, passes 1 / 2 |
+|---|---:|
+| `2` (upstream default) | 97.5 / 99.9 tok/s |
+| `2` with `EXL3_INT8_GEMV_MAX_K=6` (the CMP 170HX's 6-bit tensors too) | 97.1 / 96.9 |
+| **`0`** (served since 2026-10-20 11:10) | **100.7 / 103.6, and 99.9 / 100.7 after the switch** |
+
+About +2.5% (101.2 against 98.7), close to the spread between server starts, so it is served for the higher
+precision at no measured cost rather than for speed. Decode here is bound by the per-step latency of five cards
+synchronizing every layer, not by the weight arithmetic, so more INT8 does not help it; the INT8 indexer above is a
+prefill gain only.
 
 ### Draft settings, on the same nine requests
 
@@ -131,7 +153,8 @@ One run each, fresh server, layout `tp5-1017-35` ([results/raw/mtp-1020-0126](re
 | **`dynamic_draft: true`** (served) | **103.5** |
 | `hybrid_draft_tokens: 32` | 98.0 |
 
-Dynamic drafting was faster on 7 of the 9 requests and 3-4% slower on two (functions rewritten, whole file).
+Dynamic drafting was faster on 7 of the 9 requests and 3-4% slower on two (functions rewritten, whole file). These
+settings were compared the night before the INT8 changes, with the FP16 indexer and upstream's INT8 decode GEMVs.
 
 ### Layouts tried, same model family, two 34K-token prompts and three 900-token answers
 
@@ -209,6 +232,8 @@ one slot, so concurrent requests queue.
 - `TABBY_EXL3_GENERATOR_CHUNK=16384` (prefill chunk), `EXLLAMA_NO_P2P_COPY=1`, `EXLLAMAV3_TUNE_CACHE` per engine.
 - `EXL3_DSA_INDEXER_DTYPE=sm_80:int8,sm_120:int8`: the lightning indexer's prefill scoring in INT8 on every card
   (see [Lightning indexer in INT8](#lightning-indexer-in-int8) for the other values).
+- `EXL3_INT8_GEMV=0`: the weight GEMVs with FP16 activations ([INT8 in decode: off](#int8-in-decode-off)); the
+  fallback layouts keep upstream's default.
 - Fallback: [serving/layouts/n4x-1017-35.env](serving/layouts/n4x-1017-35.env), the same model split by layers over
   the four cards that existed before the fifth (decode about two thirds of the above), also on engine `309ef6d1`
   with the INT8 indexer (checked: loads, tool calls, a 21K-token C prompt at 1,744 tok/s).

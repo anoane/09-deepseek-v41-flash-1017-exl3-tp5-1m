@@ -1,0 +1,10 @@
+k6-2 review       ttft   0.26 s |  1500 tokens, decode   84.6 tok/s
+k6-2 bug-find     ttft   0.31 s |   761 tokens, decode  100.1 tok/s
+k6-2 fix-diff     ttft   0.29 s |   520 tokens, decode   99.7 tok/s
+k6-2 fix-func     ttft   0.27 s |  1200 tokens, decode   96.5 tok/s
+k6-2 whole-file   ttft   0.36 s |  2600 tokens, decode  101.2 tok/s
+k6-2 agent-edit   ttft   0.34 s |   163 tokens, decode  109.2 tok/s
+k6-2 agent-multi  ttft   0.35 s |   364 tokens, decode  113.3 tok/s
+k6-2 new-code     ttft   0.33 s |  1500 tokens, decode   85.5 tok/s
+k6-2 explain      ttft   0.25 s |  1000 tokens, decode   82.2 tok/s
+k6-2 streams=1: mean per-stream decode 96.9 tok/s over 9 requests; aggregate 90.8 tok/s (9608 tokens in 106 s)
