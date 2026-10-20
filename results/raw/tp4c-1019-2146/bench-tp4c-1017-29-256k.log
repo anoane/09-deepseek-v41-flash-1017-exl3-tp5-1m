@@ -1,0 +1,7 @@
+tp4c-1017-29-256k warm-up        wall    2.0 s | prompt     35 new + 0 cached, prefill     40.2 tok/s |   10 generated, decode  14.5 tok/s | ok
+tp4c-1017-29-256k short          wall    0.4 s | prompt     35 new + 0 cached, prefill    218.8 tok/s |   10 generated, decode  51.4 tok/s | ok
+tp4c-1017-29-256k long prompt A  wall   21.3 s | prompt  34013 new + 0 cached, prefill   1954.8 tok/s |  300 generated, decode  78.0 tok/s | 
+tp4c-1017-29-256k long prompt B  wall   20.1 s | prompt  33245 new + 0 cached, prefill   2052.2 tok/s |  300 generated, decode  77.6 tok/s | Here are five bullet points summarizing
+tp4c-1017-29-256k long answer    wall   12.6 s | prompt     59 new + 0 cached, prefill    347.1 tok/s |  900 generated, decode  72.7 tok/s | 
+tp4c-1017-29-256k long answer 2  wall   15.1 s | prompt     56 new + 0 cached, prefill    350.0 tok/s |  900 generated, decode  60.1 tok/s | 
+tp4c-1017-29-256k long answer 3  wall   14.1 s | prompt     50 new + 0 cached, prefill    333.3 tok/s |  900 generated, decode  64.6 tok/s | 

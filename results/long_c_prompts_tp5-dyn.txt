@@ -1,0 +1,6 @@
+# tools/bench_long.py against the live server, layout tp5-1017-35 with dynamic_draft, 1M FP16 cache, engram tables read into the page cache first; every prompt cold (unique first line). Corpus: concatenated C/CUDA/C++ sources and C headers (not published), 3.155 characters per token.
+tp5-dyn prompt    26,296 tokens (cold) | ttft    14.2 s | effective prefill  1849.5 tok/s | decode  79.7 tok/s | 600 generated
+tp5-dyn prompt   127,604 tokens (cold) | ttft    62.3 s | effective prefill  2049.2 tok/s | decode  75.8 tok/s | 600 generated
+tp5-dyn prompt   253,055 tokens (cold) | ttft   131.6 s | effective prefill  1923.4 tok/s | decode  87.5 tok/s | 600 generated
+tp5-dyn prompt   513,791 tokens (cold) | ttft   298.1 s | effective prefill  1723.8 tok/s | decode  94.6 tok/s | 600 generated
+tp5-dyn prompt 1,002,677 tokens (cold) | ttft   680.0 s | effective prefill  1474.6 tok/s | decode  83.0 tok/s | 600 generated

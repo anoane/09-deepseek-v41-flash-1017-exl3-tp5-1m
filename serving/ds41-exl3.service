@@ -1,0 +1,42 @@
+[Unit]
+Description=DeepSeek-V4.1-Flash EXL3 3.0bpw, 1M context (exllamav3 dsv41-all via TabbyAPI)
+After=network-online.target gpu-power-caps.service
+Wants=network-online.target gpu-power-caps.service
+# a faulting GPU must not restart the load for ever: five starts in 15 minutes, then systemd stops trying
+# (manual restarts count too; "systemctl reset-failed ds41-exl3" clears the counter)
+StartLimitIntervalSec=900
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ai
+Group=ai
+WorkingDirectory=/home/ai/rnd/tabby-fresh
+Environment=CUDA_DEVICE_ORDER=PCI_BUS_ID
+Environment=CUDA_HOME=/usr/local/cuda
+Environment=PATH=/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONPATH=/home/ai/rnd/release/all/src-527900a320a8:/home/ai/rnd/release/all/native-527900a320a8:/home/ai/rnd/tabby-fresh
+Environment=HF_HUB_OFFLINE=1
+Environment=TOKENIZERS_PARALLELISM=false
+Environment=PYTORCH_CUDA_ALLOC_CONF=backend:cudaMallocAsync
+Environment=PYTHONUNBUFFERED=1
+# the layout: device list, placement, switches and the TabbyAPI config (a link to one file in /home/ai/serve/layouts)
+EnvironmentFile=/home/ai/serve/ds41-exl3.env
+# not root: io_uring buffer registration is charged to RLIMIT_MEMLOCK
+LimitMEMLOCK=infinity
+LimitNOFILE=65536
+MemorySwapMax=0
+# root (+): the five cards must sit in the PCI order the device lists assume (since 2026-10-19: HX, HX, PRO, HX, HX),
+# and be capped, or nothing starts.
+# env -i: these two run as root and must not see the layout file's variables (DRY_RUN=1 there would skip the caps)
+ExecStartPre=+/usr/bin/env -i /bin/sh -c 'test "$(/usr/bin/nvidia-smi --query-gpu=pci.device_id --format=csv,noheader | /usr/bin/tr -d " \n")" = "0x20C210DE0x20C210DE0x2BB110DE0x20C210DE0x20C210DE"'
+ExecStartPre=+/usr/bin/env -i /usr/local/sbin/gpu-power-caps
+ExecStart=/home/ai/workspace/ds41-serve-venv/bin/python /home/ai/rnd/tabby-fresh/main.py --config ${DS41_CONFIG}
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=1200
+TimeoutStopSec=120
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

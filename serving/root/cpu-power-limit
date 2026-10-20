@@ -1,0 +1,25 @@
+#!/bin/bash
+# /usr/local/sbin/cpu-power-limit
+# Sets the CPU socket power limit at boot (owner 2026-10-12: the EPYC is held at 260 W). WANT_W is the limit to set
+# whatever the firmware hands over (the old machine handed over
+# 350 W on this machine since 2026-10-04); WANT_W=0 leaves a sane firmware limit as it is and only repairs an absurd
+# one: a limit below FLOOR_W (the firmware once handed over 150 mW, which pins the CPU at 545 MHz) is set to TARGET_W.
+set -u
+FLOOR_W=50; TARGET_W=150; WANT_W=260
+# the sensor comes from the HSMP driver, loaded through ACPI; give it a moment at boot
+for _ in {1..20}; do grep -qsx amd_hsmp_hwmon /sys/class/hwmon/hwmon*/name && break; sleep 1; done
+for h in /sys/class/hwmon/hwmon*; do
+  [[ $(cat "$h/name" 2>/dev/null) == amd_hsmp_hwmon ]] || continue
+  cur=$(cat "$h/power1_cap") || exit 1; max=$(cat "$h/power1_cap_max") || exit 1
+  [[ $cur =~ ^[0-9]+$ && $max =~ ^[0-9]+$ ]] || { echo "unreadable limit '$cur' / '$max'" >&2; exit 1; }
+  if (( WANT_W > 0 )); then
+    (( WANT_W >= FLOOR_W && WANT_W * 1000000 <= max )) || { echo "WANT_W=$WANT_W is not between $FLOOR_W W and the platform maximum" >&2; exit 1; }
+    if (( cur != WANT_W * 1000000 )); then echo $((WANT_W * 1000000)) > "$h/power1_cap" || { echo "writing the limit failed" >&2; exit 1; }; fi
+    echo "CPU socket power limit was $((cur / 1000)) mW: now $(( $(cat "$h/power1_cap") / 1000000 )) W"; exit 0
+  fi
+  if (( cur >= FLOOR_W * 1000000 )); then echo "CPU socket power limit is $((cur / 1000000)) W: left as it is"; exit 0; fi
+  (( TARGET_W * 1000000 <= max )) || { echo "target above the platform maximum" >&2; exit 1; }
+  echo $((TARGET_W * 1000000)) > "$h/power1_cap" || { echo "writing the limit failed" >&2; exit 1; }
+  echo "CPU socket power limit was $((cur / 1000)) mW: set to $(( $(cat "$h/power1_cap") / 1000000 )) W"; exit 0
+done
+echo "no amd_hsmp_hwmon sensor: nothing done"; exit 0

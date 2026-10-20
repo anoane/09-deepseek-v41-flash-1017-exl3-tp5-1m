@@ -1,0 +1,10 @@
+tp5m-dyn review       ttft   3.28 s |  1500 tokens, decode   91.9 tok/s
+tp5m-dyn bug-find     ttft   2.14 s |   615 tokens, decode  105.7 tok/s
+tp5m-dyn fix-diff     ttft   2.07 s |   403 tokens, decode  120.0 tok/s
+tp5m-dyn fix-func     ttft   2.09 s |  1200 tokens, decode   99.1 tok/s
+tp5m-dyn whole-file   ttft   1.29 s |  2600 tokens, decode   99.1 tok/s
+tp5m-dyn agent-edit   ttft   2.39 s |   208 tokens, decode  115.0 tok/s
+tp5m-dyn agent-multi  ttft   4.66 s |   136 tokens, decode  124.7 tok/s
+tp5m-dyn new-code     ttft   0.32 s |  1500 tokens, decode   83.2 tok/s
+tp5m-dyn explain      ttft   2.76 s |  1000 tokens, decode   92.5 tok/s
+tp5m-dyn streams=1: mean per-stream decode 103.5 tok/s over 9 requests; aggregate 78.6 tok/s (9162 tokens in 116 s)

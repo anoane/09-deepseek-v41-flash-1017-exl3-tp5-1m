@@ -1,0 +1,7 @@
+tp4-1017-29-256k warm-up        wall    2.2 s | no metrics line | ok
+tp4-1017-29-256k short          wall    0.3 s | no metrics line | ok
+tp4-1017-29-256k long prompt A  wall   20.1 s | no metrics line | 
+tp4-1017-29-256k long prompt B  wall   18.8 s | no metrics line | - **Fixed-row GEMM (`EXL3_HGEMM_FIXED_ROWS`)**: forces FP16 linears an
+tp4-1017-29-256k long answer    wall   11.5 s | no metrics line | 
+tp4-1017-29-256k long answer 2  wall   13.4 s | no metrics line | 
+tp4-1017-29-256k long answer 3  wall   13.0 s | no metrics line | 

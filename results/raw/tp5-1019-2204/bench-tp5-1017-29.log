@@ -1,0 +1,7 @@
+tp5-1017-29 warm-up        wall   17.3 s | prompt     35 new + 0 cached, prefill      3.4 tok/s |   10 generated, decode   1.5 tok/s | ok
+tp5-1017-29 short          wall    0.4 s | prompt     35 new + 0 cached, prefill    218.8 tok/s |   10 generated, decode  53.0 tok/s | ok
+tp5-1017-29 long prompt A  wall   27.1 s | prompt  34013 new + 0 cached, prefill   1619.7 tok/s |  300 generated, decode  49.3 tok/s | 
+tp5-1017-29 long prompt B  wall   19.6 s | prompt  33245 new + 0 cached, prefill   2039.6 tok/s |  300 generated, decode  93.5 tok/s | 
+tp5-1017-29 long answer    wall   20.7 s | prompt     59 new + 0 cached, prefill      5.8 tok/s |  900 generated, decode  84.9 tok/s | 
+tp5-1017-29 long answer 2  wall   13.8 s | prompt     56 new + 0 cached, prefill    329.4 tok/s |  900 generated, decode  65.9 tok/s | 
+tp5-1017-29 long answer 3  wall   13.6 s | prompt     50 new + 0 cached, prefill    294.1 tok/s |  900 generated, decode  67.1 tok/s | 

@@ -1,0 +1,7 @@
+tp4c-1017-29-nccl warm-up        wall    2.1 s | prompt     35 new + 0 cached, prefill     41.2 tok/s |   10 generated, decode  13.6 tok/s | ok
+tp4c-1017-29-nccl short          wall    0.4 s | prompt     35 new + 0 cached, prefill    218.8 tok/s |   10 generated, decode  46.9 tok/s | ok
+tp4c-1017-29-nccl long prompt A  wall   23.8 s | prompt  34013 new + 0 cached, prefill   1762.3 tok/s |  300 generated, decode  66.9 tok/s | 
+tp4c-1017-29-nccl long prompt B  wall   22.2 s | prompt  33245 new + 0 cached, prefill   1836.7 tok/s |  300 generated, decode  75.2 tok/s | Here are five bullet points summarizing the document:  - **Fixed-row G
+tp4c-1017-29-nccl long answer    wall   14.0 s | prompt     59 new + 0 cached, prefill    368.8 tok/s |  900 generated, decode  65.0 tok/s | 
+tp4c-1017-29-nccl long answer 2  wall   17.2 s | prompt     56 new + 0 cached, prefill    350.0 tok/s |  900 generated, decode  52.9 tok/s | 
+tp4c-1017-29-nccl long answer 3  wall   15.9 s | prompt     50 new + 0 cached, prefill    312.5 tok/s |  900 generated, decode  57.2 tok/s | 

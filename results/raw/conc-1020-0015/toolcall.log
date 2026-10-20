@@ -1,0 +1,1 @@
+finish_reason tool_calls tool_calls [{"id": "call_0ba21a0c9ace43b789515bda", "function": {"name": "get_weather", "arguments": "{\"city\": \"Rome\"}"}, "type": "function", "index": 0}]

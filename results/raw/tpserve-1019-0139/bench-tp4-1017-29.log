@@ -1,0 +1,7 @@
+tp4-1017-29 warm-up        wall    8.3 s | no metrics line | ok
+tp4-1017-29 short          wall    0.3 s | no metrics line | ok
+tp4-1017-29 long prompt A  wall   21.5 s | no metrics line | 
+tp4-1017-29 long prompt B  wall   18.4 s | no metrics line | 
+tp4-1017-29 long answer    wall   13.3 s | no metrics line | 
+tp4-1017-29 long answer 2  wall   13.9 s | no metrics line | 
+tp4-1017-29 long answer 3  wall   13.0 s | no metrics line | 

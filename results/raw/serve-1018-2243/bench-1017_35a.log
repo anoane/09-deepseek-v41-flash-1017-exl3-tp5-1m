@@ -1,0 +1,7 @@
+1017_35a  warm-up        wall    5.3 s | prompt     35 new + 0 cached, prefill     13.0 tok/s |   10 generated, decode   3.8 tok/s | ok
+1017_35a  short          wall    2.9 s | prompt     35 new + 0 cached, prefill     38.0 tok/s |   10 generated, decode   5.2 tok/s | ok
+1017_35a  long prompt A  wall  119.7 s | prompt  34013 new + 0 cached, prefill    503.0 tok/s |  300 generated, decode   6.0 tok/s | 
+1017_35a  long prompt B  wall  117.3 s | prompt  33245 new + 0 cached, prefill    502.9 tok/s |  300 generated, decode   6.0 tok/s | 
+1017_35a  long answer    wall  172.5 s | prompt     59 new + 0 cached, prefill     58.4 tok/s |  900 generated, decode   5.2 tok/s | 
+1017_35a  long answer 2  wall  215.7 s | prompt     56 new + 0 cached, prefill     55.5 tok/s |  900 generated, decode   4.2 tok/s | 
+1017_35a  long answer 3  wall  186.8 s | prompt     50 new + 0 cached, prefill     51.0 tok/s |  900 generated, decode   4.8 tok/s | 

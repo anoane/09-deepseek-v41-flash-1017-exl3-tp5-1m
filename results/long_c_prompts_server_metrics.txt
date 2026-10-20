@@ -1,0 +1,6 @@
+# Server-side figures (TabbyAPI metrics in the unit journal) of the long C-prompt run: layout tp5-1017-35 (dynamic_draft), 1M FP16 cache, every prompt cold.
+prompt    26296 (   26296 new) in   13.60 s = prefill  1933.5 tok/s |  600 generated at 81.0 T/s
+prompt   127604 (  127604 new) in   61.90 s = prefill  2061.5 tok/s |  600 generated at 73.0 T/s
+prompt   253055 (  253055 new) in  131.20 s = prefill  1928.8 tok/s |  600 generated at 83.6 T/s
+prompt   513791 (  513791 new) in  297.40 s = prefill  1727.6 tok/s |  600 generated at 88.2 T/s
+prompt  1002677 ( 1002677 new) in  679.40 s = prefill  1475.8 tok/s |  600 generated at 81.1 T/s

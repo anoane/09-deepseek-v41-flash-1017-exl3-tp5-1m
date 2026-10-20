@@ -1,0 +1,17 @@
+[Unit]
+Description=GPU power caps by PCI device id (RTX PRO 6000 400 W, CMP 170HX 150 W, RTX 4090 250 W)
+# nvidia-persistenced is started by udev when the driver registers. After it, the driver is up and
+# "nvidia-smi -pm 1" goes through the daemon. The unlock tool's unit switches persistence off on the CMP,
+# so this one runs after it.
+Wants=nvidia-persistenced.service
+After=nvidia-persistenced.service cmpunlocker-passthrough.service
+ConditionPathExists=/usr/bin/nvidia-smi
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/gpu-power-caps
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

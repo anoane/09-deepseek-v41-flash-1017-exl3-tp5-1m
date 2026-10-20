@@ -1,0 +1,7 @@
+tp4c-1017-29 warm-up        wall    8.6 s | prompt     35 new + 0 cached, prefill      7.5 tok/s |   10 generated, decode   2.8 tok/s | ok
+tp4c-1017-29 short          wall    0.4 s | prompt     35 new + 0 cached, prefill    233.3 tok/s |   10 generated, decode  49.7 tok/s | ok
+tp4c-1017-29 long prompt A  wall   24.6 s | prompt  34013 new + 0 cached, prefill   1683.8 tok/s |  300 generated, decode  67.6 tok/s | - **EXL3 conversion (`convert.py`)** turns an unquantized HF model int
+tp4c-1017-29 long prompt B  wall   21.7 s | prompt  33245 new + 0 cached, prefill   1857.3 tok/s |  300 generated, decode  80.0 tok/s | 
+tp4c-1017-29 long answer    wall   17.4 s | prompt     59 new + 0 cached, prefill     12.0 tok/s |  900 generated, decode  72.1 tok/s | 
+tp4c-1017-29 long answer 2  wall   16.2 s | prompt     56 new + 0 cached, prefill    329.4 tok/s |  900 generated, decode  56.2 tok/s | 
+tp4c-1017-29 long answer 3  wall   14.4 s | prompt     50 new + 0 cached, prefill    294.1 tok/s |  900 generated, decode  63.5 tok/s | 

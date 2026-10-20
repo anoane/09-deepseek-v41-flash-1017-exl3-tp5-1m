@@ -1,0 +1,12 @@
+[Unit]
+Description=Repair the CPU socket power limit when the firmware sets it to milliwatts
+After=sysinit.target
+ConditionPathExists=/usr/local/sbin/cpu-power-limit
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/cpu-power-limit
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch the certificate Caddy renews for the endpoint on 8443
+[Path]
+PathChanged=/var/lib/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/wildcard_.example.com/wildcard_.example.com.crt
+Unit=nginx-cert-reload.service
+[Install]
+WantedBy=multi-user.target

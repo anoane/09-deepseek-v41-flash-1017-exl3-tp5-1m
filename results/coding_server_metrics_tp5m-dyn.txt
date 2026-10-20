@@ -1,0 +1,13 @@
+# Server-side figures (TabbyAPI metrics lines) of the tp5m-dyn run of mtp-1020-0126: layout tp5-1017-35 with dynamic_draft,
+# fresh server, every prompt cold (first request after load: the 40-token warm-up), 1M FP16 cache. new = tokens prefilled.
+prompt     40 (    40 new) in  0.86 s = prefill    46.5 tok/s |   300 generated at 87.9 T/s
+prompt   5171 (  5171 new) in  3.14 s = prefill  1646.8 tok/s |  1500 generated at 91.3 T/s
+prompt   3479 (  3479 new) in  2.06 s = prefill  1688.8 tok/s |   615 generated at 104.8 T/s
+prompt   3404 (  3404 new) in  2.00 s = prefill  1702.0 tok/s |   403 generated at 118.3 T/s
+prompt   3405 (  3405 new) in  2.00 s = prefill  1702.5 tok/s |  1200 generated at 98.7 T/s
+prompt   1788 (  1788 new) in  1.21 s = prefill  1477.7 tok/s |  2600 generated at 98.9 T/s
+prompt   4033 (  4033 new) in  2.30 s = prefill  1753.5 tok/s |   208 generated at 111.7 T/s
+prompt   9426 (  9426 new) in  4.56 s = prefill  2067.1 tok/s |   136 generated at 118.5 T/s
+prompt    139 (   139 new) in  0.24 s = prefill   579.2 tok/s |  1500 generated at 83.0 T/s
+prompt   5158 (  5158 new) in  2.68 s = prefill  1924.6 tok/s |  1000 generated at 92.1 T/s
+prompt    301 (   301 new) in  0.45 s = prefill   668.9 tok/s |    50 generated at 135.3 T/s

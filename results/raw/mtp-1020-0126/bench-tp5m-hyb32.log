@@ -1,0 +1,10 @@
+tp5m-hyb32 review       ttft   3.32 s |  1500 tokens, decode   86.9 tok/s
+tp5m-hyb32 bug-find     ttft   2.18 s |   797 tokens, decode   93.0 tok/s
+tp5m-hyb32 fix-diff     ttft   2.12 s |   411 tokens, decode  118.6 tok/s
+tp5m-hyb32 fix-func     ttft   2.10 s |  1200 tokens, decode   95.0 tok/s
+tp5m-hyb32 whole-file   ttft   1.30 s |  2600 tokens, decode   99.9 tok/s
+tp5m-hyb32 agent-edit   ttft   2.40 s |   154 tokens, decode  108.0 tok/s
+tp5m-hyb32 agent-multi  ttft   4.70 s |   396 tokens, decode  106.7 tok/s
+tp5m-hyb32 new-code     ttft   0.31 s |  1500 tokens, decode   86.7 tok/s
+tp5m-hyb32 explain      ttft   2.83 s |  1000 tokens, decode   86.9 tok/s
+tp5m-hyb32 streams=1: mean per-stream decode 98.0 tok/s over 9 requests; aggregate 77.7 tok/s (9558 tokens in 123 s)

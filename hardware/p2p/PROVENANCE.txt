@@ -1,0 +1,14 @@
+Peer-capable NVIDIA module set for the one-time P2P trial boot (design/peer_to_peer.md, route B).
+fork: Morrowmake/cmpunlocker 1f2c498, patches in its PATCH_ORDER, profile 8gb (64GB geometry)
+source: open-gpu-kernel-modules 610.57.04 tag tarball sha256 619d7b5ce1f79c3211afdbf87d02b2174d268b10d005c5b8f994be22299be681
+patch set sha256 (concatenated in order): 5fc9d1a6ebec2eac59fa45b22b512a3edd25f0eacfa3b5325476636e184ab44e
+kernel 7.0.0-38-generic; built 2026-10-18T03:57:06Z as the ordinary user with driver/build_only.sh (build.sh cut before its install part)
+note: nvidia.ko srcversion equals the stock one (srcversion hashes only the open interface sources); identify by sha256
+loaded by /usr/local/sbin/anemone-p2p-trial-load only on a boot whose command line has anemone_p2p_trial=1
+
+08050d7ef22596d3b78118bad491658c156fad5a07a889ee6c520363389ce6ef  nvidia.ko
+ab510bb4b029df99fa12607625f1d6420c134dca1e74546b437e942432c5728e  nvidia-modeset.ko
+49d372e433677bfafb25735bf11307e2564be3518ad7f257ffe24bdfc4b05ff9  nvidia-uvm.ko
+3b0b26011f69981d8131f72e5712102d0eb1ceb27a8fa2067e7735959978ca06  nvidia-drm.ko
+30f8bc270b6ac168562c1cbecfa5b0e5edf491596b036013a9cbdbef49331d32  nvidia-peermem.ko
+ab0bb1c2613ff9c5807b28f4f2ae4242efa43c851b196f56e623901b38146edd  cmp-pcie-gen2.conf

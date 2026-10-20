@@ -1,0 +1,20 @@
+tp5x2-1 review       ttft   4.50 s |  1500 tokens, decode   92.6 tok/s
+tp5x2-1 bug-find     ttft   2.26 s |   651 tokens, decode   95.4 tok/s
+tp5x2-1 fix-diff     ttft   2.12 s |   502 tokens, decode   99.0 tok/s
+tp5x2-1 fix-func     ttft   2.10 s |  1200 tokens, decode   97.1 tok/s
+tp5x2-1 whole-file   ttft   1.36 s |  2600 tokens, decode   93.1 tok/s
+tp5x2-1 agent-edit   ttft   2.40 s |   154 tokens, decode  107.8 tok/s
+tp5x2-1 agent-multi  ttft   4.61 s |   313 tokens, decode  107.7 tok/s
+tp5x2-1 new-code     ttft   0.33 s |  1500 tokens, decode   82.4 tok/s
+tp5x2-1 explain      ttft   2.82 s |  1000 tokens, decode   83.2 tok/s
+tp5x2-1 streams=1: mean per-stream decode 95.4 tok/s over 9 requests; aggregate 75.2 tok/s (9420 tokens in 125 s)
+tp5x2-2 bug-find     ttft   3.17 s |   801 tokens, decode   31.9 tok/s
+tp5x2-2 fix-diff     ttft   0.66 s |   374 tokens, decode   35.6 tok/s
+tp5x2-2 review       ttft   3.17 s |  1500 tokens, decode   27.0 tok/s
+tp5x2-2 fix-func     ttft   0.61 s |  1200 tokens, decode   30.7 tok/s
+tp5x2-2 agent-edit   ttft   0.71 s |   226 tokens, decode   28.6 tok/s
+tp5x2-2 agent-multi  ttft   0.62 s |   349 tokens, decode   30.0 tok/s
+tp5x2-2 whole-file   ttft   0.73 s |  2600 tokens, decode   28.5 tok/s
+tp5x2-2 new-code     ttft   0.64 s |  1500 tokens, decode   27.6 tok/s
+tp5x2-2 explain      ttft   0.48 s |  1000 tokens, decode   70.0 tok/s
+tp5x2-2 streams=2: mean per-stream decode 34.4 tok/s over 9 requests; aggregate 57.8 tok/s (9550 tokens in 165 s)

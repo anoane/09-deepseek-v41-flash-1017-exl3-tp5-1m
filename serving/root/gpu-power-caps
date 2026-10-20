@@ -1,0 +1,66 @@
+#!/bin/bash
+# /usr/local/sbin/gpu-power-caps
+# Applies the GPU power caps. Cards are selected by PCI device id, never by index.
+# "nvidia-smi -pl" needs root. DRY_RUN=1 prints the two changing commands instead (any user).
+# Fails closed: a card with no cap configured, or a number of cards per kind other than EXPECT, is an error, so
+# that ds41-exl3.service (which runs this before it starts) never loads onto an uncapped or unexpected card.
+set -u
+export LC_ALL=C PATH=/usr/sbin:/usr/bin:/sbin:/bin
+SMI=/usr/bin/nvidia-smi
+DRY_RUN=${DRY_RUN:-0}
+
+# pci.device_id as nvidia-smi prints it (device id followed by vendor id 10de), lower case
+declare -A CAP=(
+  [0x2bb110de]="400 RTX-PRO-6000"
+  [0x20c210de]="150 CMP-170HX"
+  [0x268410de]="250 RTX-4090"
+)
+# the cards this machine holds, per kind (since 2026-10-10: one RTX PRO 6000 and three CMP 170HX (2026-10-13); set the 170HX
+# count to 4 when the two further cards are in)
+declare -A EXPECT=(
+  [0x2bb110de]=1
+  [0x20c210de]=4
+)
+
+run() { if [[ $DRY_RUN == 1 ]]; then echo "dry-run: $*"; else "$@" >/dev/null; fi; }
+
+[[ -x $SMI ]] || { echo "$SMI missing" >&2; exit 1; }
+[[ $DRY_RUN == 1 || $EUID -eq 0 ]] || { echo "must run as root (or DRY_RUN=1)" >&2; exit 1; }
+
+# The unit is ordered after nvidia-persistenced; this loop only covers a slow driver start.
+list=""
+for _ in {1..30}; do
+  list=$("$SMI" --query-gpu=pci.bus_id,pci.device_id --format=csv,noheader 2>/dev/null) && [[ -n $list ]] && break
+  list=""; sleep 2
+done
+[[ -n $list ]] || { echo "nvidia-smi lists no GPU after 60 s" >&2; exit 1; }
+
+rc=0
+declare -A seen=()
+while IFS=, read -r bus dev; do
+  bus=${bus//[[:space:]]/}; dev=${dev//[[:space:]]/}; dev=${dev,,}
+  [[ $bus =~ ^[0-9A-Fa-f]{4,8}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}\.[0-7]$ ]] || { echo "unexpected bus id '$bus'" >&2; rc=1; continue; }
+  [[ $dev =~ ^0x[0-9a-f]{8}$ ]] || { echo "$bus: unexpected device id '$dev'" >&2; rc=1; continue; }
+  seen[$dev]=$(( ${seen[$dev]:-0} + 1 ))
+  entry=${CAP[$dev]:-}
+  [[ -n $entry ]] || { echo "$bus: no cap configured for device id $dev" >&2; rc=1; continue; }
+  watts=${entry%% *}; label=${entry#* }
+  lim=$("$SMI" -i "$bus" --query-gpu=power.min_limit,power.max_limit --format=csv,noheader,nounits 2>/dev/null) || lim=""
+  IFS=, read -r min max <<<"$lim"; min=${min//[[:space:]]/}; max=${max//[[:space:]]/}; min=${min%%.*}; max=${max%%.*}
+  if ! [[ $min =~ ^[0-9]+$ && $max =~ ^[0-9]+$ ]] || (( watts < min || watts > max )); then
+    echo "$label $bus: $watts W is outside the card's range '$min'..'$max' W" >&2; rc=1; continue
+  fi
+  # Persistence mode keeps the GPU initialised; without it the cap is dropped when the last client exits.
+  run "$SMI" -i "$bus" -pm 1 || { echo "$label $bus: enabling persistence mode failed" >&2; rc=1; }
+  run "$SMI" -i "$bus" -pl "$watts" || { echo "$label $bus: setting $watts W failed" >&2; rc=1; continue; }
+  [[ $DRY_RUN == 1 ]] && continue
+  got=$("$SMI" -i "$bus" --query-gpu=power.limit --format=csv,noheader,nounits 2>/dev/null) || got=""
+  got=${got//[[:space:]]/}
+  if [[ ${got%%.*} == "$watts" ]]; then echo "$label $bus: power limit $watts W"
+  else echo "$label $bus: read back '$got' W, expected $watts W" >&2; rc=1; fi
+done <<<"$list"
+
+for dev in "${!EXPECT[@]}" "${!seen[@]}"; do
+  [[ ${seen[$dev]:-0} == "${EXPECT[$dev]:-0}" ]] || { echo "${CAP[$dev]#* } (device id $dev): ${seen[$dev]:-0} found, ${EXPECT[$dev]:-0} expected" >&2; rc=1; }
+done
+exit "$rc"

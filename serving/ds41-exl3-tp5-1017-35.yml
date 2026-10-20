@@ -1,0 +1,39 @@
+# TabbyAPI config of layout tp5-1017-35 (layouts/tp5-1017-35.env): DeepSeek-V4.1-Flash-1017 EXL3 3.5 bpw in tensor parallel
+# over five cards (four CMP 170HX and an RTX PRO 6000), the draft head on the PRO. FP16 KV, 1M context, one slot.
+network:
+  host: 127.0.0.1          # local only; Caddy on :8443 is the only way in
+  port: 1920
+  disable_auth: false      # TabbyAPI checks its own keys (api_tokens.yml in its checkout); the proxy checks nothing
+  disable_fetch_requests: true
+  send_tracebacks: false
+  api_servers: ["OAI"]
+logging:
+  log_prompt: false
+  log_generation_params: false
+  log_requests: false      # true logs the URL, every header (the bearer key) and the whole body of each request
+model:
+  model_dir: /home/ai/serve/models
+  model_name: DeepSeek-V4.1-Flash-1017-EXL3-3.5bpw
+  backend: exllamav3
+  max_seq_len: 1048576
+  cache_size: 1048576
+  max_batch_size: 1        # one recurrent slot; concurrent requests queue
+  chunk_size: 4096         # load chunk; the Generator's chunk is 16384 (layout file): pipelined prefill
+  gpu_split_auto: false    # limits per card, in GB, in the visible order CMP, CMP, CMP, CMP, PRO: tensor parallel shares by these, the PRO's 70 leaves room for the draft head's 20
+  gpu_split: [58, 58, 58, 58, 70]
+  tensor_parallel: true
+  tensor_parallel_backend: native
+  reasoning: true
+  tool_format: deepseek_v41  # V4.1 DSML spelling (serving/tabby-deepseek_v41-toolformat.patch)
+  start_in_reasoning: always
+  template_vars_default:
+    enable_thinking: true
+    reasoning_effort: high # the V4.1 template takes low | high | max | 1..100
+memory:
+  sysmem_recurrent_cache: 4096
+  sysmem_kv_cache: 0
+  cuda_malloc_async: true
+draft_model:
+  draft_mode: mtp          # the draft head stored in the model (DSpark); output is not token for token the undrafted output
+  draft_gpu_split: [0, 0, 0, 0, 20]   # the draft head on the RTX PRO 6000 (last visible card)
+  dynamic_draft: true      # draft length adapts to the acceptance: C coding 103.5 tok/s against 98.6 at the default (2026-10-20)

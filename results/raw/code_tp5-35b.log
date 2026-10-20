@@ -1,0 +1,10 @@
+tp5-35 review         no metrics line
+tp5-35 bug-find       no metrics line
+tp5-35 fix-diff       no metrics line
+tp5-35 fix-func       no metrics line
+tp5-35 whole-file     no metrics line
+tp5-35 agent-edit     prompt  4033 new, prefill  1723.5 tok/s |  180 generated, decode   99.9 tok/s
+tp5-35 agent-multi    prompt  9426 new, prefill  1935.5 tok/s |  192 generated, decode  120.9 tok/s
+tp5-35 new-code       prompt   139 new, prefill   556.0 tok/s | 1500 generated, decode   87.6 tok/s
+tp5-35 explain        prompt  5158 new, prefill  1642.7 tok/s | 1000 generated, decode   89.6 tok/s
+tp5-35 coding mean decode 99.5 tok/s over 4 requests

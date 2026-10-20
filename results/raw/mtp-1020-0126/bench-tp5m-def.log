@@ -1,0 +1,10 @@
+tp5m-def review       ttft   3.27 s |  1500 tokens, decode   90.6 tok/s
+tp5m-def bug-find     ttft   2.16 s |   670 tokens, decode   98.3 tok/s
+tp5m-def fix-diff     ttft   2.13 s |   403 tokens, decode  118.2 tok/s
+tp5m-def fix-func     ttft   2.10 s |  1200 tokens, decode  103.0 tok/s
+tp5m-def whole-file   ttft   1.30 s |  2600 tokens, decode  103.2 tok/s
+tp5m-def agent-edit   ttft   2.43 s |   180 tokens, decode  105.5 tok/s
+tp5m-def agent-multi  ttft   4.64 s |   295 tokens, decode  108.6 tok/s
+tp5m-def new-code     ttft   0.31 s |  1500 tokens, decode   79.2 tok/s
+tp5m-def explain      ttft   2.76 s |  1000 tokens, decode   80.7 tok/s
+tp5m-def streams=1: mean per-stream decode 98.6 tok/s over 9 requests; aggregate 77.7 tok/s (9348 tokens in 120 s)

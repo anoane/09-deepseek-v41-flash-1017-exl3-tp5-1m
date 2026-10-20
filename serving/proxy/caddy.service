@@ -1,0 +1,24 @@
+[Unit]
+Description=Caddy HTTPS reverse proxy (build with the Cloudflare DNS module)
+Documentation=https://caddyserver.com/docs/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=caddy
+Group=caddy
+# the DNS token; read by systemd as root, the file is root-only. No --environ: it would print the token to the journal.
+EnvironmentFile=/etc/caddy/dns-token.env   # holds the DNS provider token the Caddyfile reads; never published
+ExecStart=/usr/bin/caddy-cf run --config /etc/caddy/Caddyfile
+# no ExecReload: reload needs the admin endpoint, which the Caddyfile switches off; use restart after an edit
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

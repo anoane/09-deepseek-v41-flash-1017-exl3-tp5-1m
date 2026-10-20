@@ -1,0 +1,41 @@
+# HTTPS front for the model server. Only port 8443 is forwarded to this machine, so certificates come from the
+# DNS challenge (token in /etc/caddy/cf.env, never here) and nothing listens on 80 or 443.
+# TabbyAPI checks the bearer key itself; this file holds no secret.
+{
+	# no admin endpoint: it has no authentication, and a configuration loaded through it can expand the DNS token
+	admin off
+	auto_https disable_redirects
+	# long prompts are read for minutes before the first byte: no 60 s cut of HTTP/1.1 clients (2026-10-14)
+	servers {
+		timeouts {
+			read_body 10m
+			read_header 30s
+			write 24h
+			idle 10m
+		}
+	}
+	acme_dns cloudflare {env.CF_API_TOKEN}
+}
+
+*.example.com:8444 {
+	# behind nginx since 2026-10-14: kept only so that Caddy renews the certificate nginx serves on 8443
+	bind 127.0.0.1
+	@ds4 host ds4.example.com
+	handle @ds4 {
+		# flush_interval -1: stream tokens as they come, never buffer the response
+		reverse_proxy 127.0.0.1:1920 {
+			flush_interval -1
+			stream_timeout 24h
+			stream_close_delay 24h
+			transport http {
+				read_timeout 24h
+				write_timeout 24h
+				response_header_timeout 24h
+			}
+		}
+	}
+	# any other name under the wildcard: no site here
+	handle {
+		abort
+	}
+}

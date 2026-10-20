@@ -1,0 +1,17 @@
+[Unit]
+Description=Read the served model n-gram tables into the page cache once ds41-exl3 has opened its port
+After=ds41-exl3.service
+
+[Service]
+# exec, not oneshot: boot must not wait the minutes this takes
+Type=exec
+User=ai
+Group=ai
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+Environment=PREWARM_DROP=0
+ExecStart=/bin/bash -c "for i in $$(seq 1 360); do ss -Hltn \"sport = :1920\" | grep -q . && exec /home/ai/serve/prewarm-ngram.sh; systemctl is-active -q ds41-exl3 || systemctl is-enabled -q ds41-exl3 || exit 0; sleep 5; done; echo \"ds41-exl3 opened no port in 30 min: tables not read\""
+
+[Install]
+WantedBy=multi-user.target
